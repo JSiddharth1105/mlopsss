@@ -1,0 +1,58 @@
+# .github/workflows/deploy.yml
+name: Build & Deploy to Render (Docker Hub)
+
+on:
+  push:
+    branches:
+      - master # Ensure this matches your main branch name (e.g., 'main' or 'master')
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    # Permissions for this job:
+    # 'contents: read' allows checkout of your repository code.
+    # 'packages: write' is NOT needed for Docker Hub, but 'id-token: write' might be for OIDC if you use it.
+    # For basic Docker Hub push, 'contents: read' is usually sufficient, as credentials are passed directly.
+    permissions:
+      contents: read
+      # If you were using OIDC for Docker Hub, you might need: id-token: write
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔑 Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io # This is the default registry for Docker Hub, but explicitly stating it is good.
+          username: ${{ secrets.DOCKER_USERNAME }} # Use the Docker Hub username secret
+          password: ${{ secrets.DOCKER_TOKEN }} # Use the Docker Hub token secret
+
+      - name: ⚙️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build and Push Docker Image to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # IMPORTANT: Replace 'your_docker_username' with your actual Docker Hub username.
+          # The image name should match what Render is configured to pull.
+          tags: |
+            chandrashekar316/${{ github.event.repository.name }}:latest
+            chandrashekar316/${{ github.event.repository.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🚀 Trigger Render Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret not set. Skipping Render deploy trigger."
+          else
+            echo "Triggering Render deploy..."
+            curl -X POST "$RENDER_DEPLOY_HOOK_URL"
+            echo "Render deploy triggered successfully!"
+          fi
