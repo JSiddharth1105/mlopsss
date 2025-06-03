@@ -153,5 +153,3 @@ if uploaded_file is not None:
     st.success("Forecasting complete! See plots and metrics above.")
 else:
     st.info("Awaiting CSV upload...")
-
-
