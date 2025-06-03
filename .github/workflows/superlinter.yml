@@ -40,8 +40,8 @@ jobs:
           # IMPORTANT: Replace 'your_docker_username' with your actual Docker Hub username.
           # The image name should match what Render is configured to pull.
           tags: |
-            chandrashekar316/${{ github.event.repository.name }}:latest
-            chandrashekar316/${{ github.event.repository.name }}:${{ github.sha }}
+            jsiddharth1105/${{ github.event.repository.name }}:latest
+            jsiddharth1105/${{ github.event.repository.name }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
